@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Maximize, X } from './Icons';
 import { WeatherData } from '../../types/weather';
+import { calculateRisk } from '../../lib/heatIndex';
 
 interface HeatMapProps {
   centerLat?: number;
@@ -30,6 +31,15 @@ const MUMBAI_MICRO_ZONES = [
   { name: "Kurla", lat: 19.0607, lon: 72.8836 }
 ];
 
+const MUMBAI_SAFE_ZONES = [
+  { name: "Sanjay Gandhi National Park", lat: 19.2288, lon: 72.9182 },
+  { name: "Aarey Forest", lat: 19.1415, lon: 72.8837 },
+  { name: "Shivaji Park", lat: 19.0267, lon: 72.8378 },
+  { name: "Hanging Gardens", lat: 18.9568, lon: 72.8222 },
+  { name: "Bandra Fort Garden", lat: 19.0413, lon: 72.8193 },
+  { name: "IIT Powai Greenery", lat: 19.1334, lon: 72.9133 }
+];
+
 const HeatMap: React.FC<HeatMapProps> = ({
   centerLat = 19.0760,
   centerLon = 72.8777,
@@ -51,14 +61,70 @@ const HeatMap: React.FC<HeatMapProps> = ({
       Math.sin((lat + lon) * 400) * 2
     );
     const projectedTemp = baseWeight + spatialJitter;
+    // Map temperature score to 0-1 weight
     return Math.min(1, Math.max(0.1, (projectedTemp - 20) / 25));
   };
 
-  const getRiskColor = (weight: number) => {
-    if (weight > 0.8) return '#ef4444';
-    if (weight > 0.6) return '#f97316';
-    if (weight > 0.4) return '#eab308';
-    return '#22c55e';
+  const getMockAQI = (weight: number) => {
+    return Math.round(50 + (weight * 120));
+  };
+
+  const addInteractionZone = (map: any, zone: any, weight: number, type: string, isModal: boolean) => {
+    const L = (window as any).L;
+    const temp = Math.round(weight * 25 + 20);
+    const humidity = Math.round(40 + (weight * 30));
+    const aqi = getMockAQI(weight);
+    const risk = calculateRisk(temp, humidity, 'general', 'under_30');
+
+    const interactionZone = L.circleMarker([zone.lat, zone.lon], {
+      radius: isModal ? 30 : 20,
+      fillColor: 'transparent',
+      stroke: false,
+      interactive: true
+    }).addTo(map);
+
+    const tooltipContent = `
+      <div class="p-4 bg-slate-900/95 backdrop-blur-xl text-white rounded-[1.5rem] border border-white/20 shadow-2xl min-w-[200px] pointer-events-none">
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-widest text-brand-orange">${type}</p>
+            <h4 class="text-xl font-black italic tracking-tighter">${zone.name}</h4>
+          </div>
+          <div class="px-3 py-1 bg-white/10 rounded-full text-[8px] font-black uppercase tracking-tighter border border-white/10" style="color: white; background: rgba(255,255,255,0.1)">${risk.level}</div>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4 mt-4 border-t border-white/10 pt-4">
+          <div>
+            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Temperature</p>
+            <p class="text-lg font-black">${temp}°C</p>
+          </div>
+          <div>
+            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Humidity</p>
+            <p class="text-lg font-black">${humidity}%</p>
+          </div>
+          <div>
+            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">AQI Index</p>
+            <p class="text-lg font-black ${aqi > 100 ? 'text-orange-400' : 'text-emerald-400'}">${aqi}</p>
+          </div>
+          <div>
+            <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Exposure Risk</p>
+            <p class="text-lg font-black text-brand-orange">High Strength</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    interactionZone.bindTooltip(tooltipContent, {
+      direction: 'top',
+      offset: [0, -10],
+      className: 'stats-tooltip',
+      opacity: 1,
+      sticky: true
+    });
+
+    interactionZone.on('click', () => {
+      onLocationSelect?.(zone.lat, zone.lon);
+    });
   };
 
   const setupMap = (element: HTMLDivElement, isModal: boolean) => {
@@ -78,70 +144,35 @@ const HeatMap: React.FC<HeatMapProps> = ({
       opacity: 0.9
     }).addTo(map);
 
-    // Plot real micro-zones
     const points: any[] = [];
 
-    // Add base data from our micro-zones
-    MUMBAI_MICRO_ZONES.forEach(zone => {
+    MUMBAI_MICRO_ZONES.forEach((zone: any) => {
       const weight = getWeightAt(zone.lat, zone.lon, intensity);
       points.push([zone.lat, zone.lon, weight]);
-
-      // Add visual spot (marker)
-      const color = getRiskColor(weight);
-      const marker = L.circleMarker([zone.lat, zone.lon], {
-        radius: isModal ? 8 : 6,
-        fillColor: color,
-        color: '#fff',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.8,
-        className: 'pulse-marker'
-      }).addTo(map);
-
-      if (isModal) {
-        marker.bindPopup(`<b>${zone.name}</b><br/>Temp: ${Math.round(weight * 25 + 20)}°C`);
-      }
+      addInteractionZone(map, zone, weight, "Urban Sector", isModal);
     });
 
-    // Also add the user's current center as a spot
+    MUMBAI_SAFE_ZONES.forEach((zone: any) => {
+      const weight = getWeightAt(zone.lat, zone.lon, Math.max(25, intensity - 10));
+      const finalWeight = weight * 0.4;
+      points.push([zone.lat, zone.lon, finalWeight]);
+      addInteractionZone(map, zone, finalWeight, "Green Belt", isModal);
+    });
+
     const currentWeight = getWeightAt(centerLat, centerLon, intensity);
     points.push([centerLat, centerLon, currentWeight]);
-    L.circleMarker([centerLat, centerLon], {
-      radius: isModal ? 12 : 10,
-      fillColor: getRiskColor(currentWeight),
-      color: '#fff',
-      weight: 3,
-      opacity: 1,
-      fillOpacity: 1,
-      className: 'pulse-marker'
-    }).addTo(map).bindPopup('<b>Current Focus</b>');
+    addInteractionZone(map, { name: "Current Location", lat: centerLat, lon: centerLon }, currentWeight, "Target Area", isModal);
 
-    // Add local jittered spots around the current center for "every corner" feel
-    for (let i = 0; i < 5; i++) {
-      const angle = (i / 5) * Math.PI * 2;
-      const dist = 0.015 + (Math.sin(i * 100) * 0.01);
-      const lLat = centerLat + Math.cos(angle) * dist;
-      const lLon = centerLon + Math.sin(angle) * dist;
-      const lWeight = getWeightAt(lLat, lLon, intensity);
-      points.push([lLat, lLon, lWeight]);
-
-      L.circleMarker([lLat, lLon], {
-        radius: isModal ? 5 : 4,
-        fillColor: getRiskColor(lWeight),
-        color: '#fff',
-        weight: 1,
-        opacity: 0.6,
-        fillOpacity: 0.4,
-        className: 'pulse-marker'
-      }).addTo(map);
-    }
-
-    // Heatmap layer for "atmospheric" effect
     const heatmap = L.heatLayer(points, {
-      radius: isModal ? 45 : 35,
-      blur: isModal ? 30 : 25,
+      radius: isModal ? 85 : 70,
+      blur: isModal ? 50 : 45,
       maxZoom: 13,
-      gradient: { 0.2: '#22c55e', 0.4: '#eab308', 0.6: '#f97316', 0.9: '#ef4444' }
+      gradient: { 
+        0.05: '#22c55e',
+        0.25: '#eab308', 
+        0.5: '#f97316', 
+        0.8: '#ef4444' 
+      }
     });
 
     map.addLayer(heatmap);
@@ -151,25 +182,31 @@ const HeatMap: React.FC<HeatMapProps> = ({
   };
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !mapRef.current || isExpanded) return;
+    if (typeof window === 'undefined') return;
 
-    // Inject pulse animation CSS
-    if (!document.getElementById('map-pulse-styles')) {
+    if (!document.getElementById('map-interaction-styles')) {
       const style = document.createElement('style');
-      style.id = 'map-pulse-styles';
+      style.id = 'map-interaction-styles';
       style.innerHTML = `
-            @keyframes marker-pulse {
-                0% { transform: scale(1); opacity: 0.8; }
-                50% { transform: scale(1.2); opacity: 0.4; }
-                100% { transform: scale(1); opacity: 0.8; }
-            }
-            .pulse-marker {
-                animation: marker-pulse 2s infinite ease-in-out;
-                transform-origin: center;
-            }
-        `;
+        .stats-tooltip {
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+        }
+        .stats-tooltip::before {
+          display: none !important;
+        }
+        .leaflet-tooltip-pane {
+          z-index: 12000 !important;
+        }
+      `;
       document.head.appendChild(style);
     }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !mapRef.current || isExpanded) return;
 
     const instance = setupMap(mapRef.current, false);
     if (instance) mapInstance.current = instance;
@@ -202,11 +239,11 @@ const HeatMap: React.FC<HeatMapProps> = ({
         <div ref={mapRef} className="w-full h-full z-0" />
         <div className="absolute top-6 left-6 z-10 pointer-events-none">
           <span className="flex items-center gap-2 px-4 py-2 glass glass--rounded shadow-sm">
-            <span className="h-2.5 w-2.5 bg-red-600 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span>
-            <span className="text-xs font-black text-slate-800 uppercase tracking-widest">Real-Time Heat Plots</span>
+            <span className="h-2.5 w-2.5 bg-red-600 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span>
+            <span className="text-xs font-black text-slate-800 uppercase tracking-widest">Regional Heat Zones</span>
           </span>
         </div>
-        <div className="absolute top-6 right-6 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-6 right-6 z-10 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
           <button
             onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}
             className="p-3 glass glass--rounded shadow-xl text-slate-900 hover:scale-110 active:scale-95 transition-all"

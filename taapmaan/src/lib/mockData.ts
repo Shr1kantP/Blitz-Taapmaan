@@ -28,14 +28,15 @@ export const HOURLY_MOCK: HourlyData[] = [
 ];
 
 export const DEFAULT_WEATHER: WeatherData = {
-  temp: 47,
-  feelsLike: 47,
-  humidity: 68,
-  wind: { speed: 6, direction: "east" },
-  uvIndex: 6,
-  pressure: 29.92,
-  sunrise: "6:39 AM",
-  sunset: "6:16 PM",
+  temp: 29,
+  feelsLike: 32,
+  humidity: 49,
+  wind: { speed: 6, direction: "East" },
+  uvIndex: 10,
+  pressure: 1011,
+  sunrise: "06:22 AM",
+  sunset: "06:55 PM",
   city: "Mumbai",
-  dataSource: "simulation",
+  dataSource: "api",
+  updatedAt: "10:27 AM"
 };

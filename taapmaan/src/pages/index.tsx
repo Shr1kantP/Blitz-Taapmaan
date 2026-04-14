@@ -18,7 +18,7 @@ import PhoneFrame from '../components/desktop/PhoneFrame';
 import DesktopDashboard from '../components/desktop/DesktopDashboard';
 import Drawer from '../components/shared/Drawer';
 import VerticalNav from '../components/shared/VerticalNav';
-import { Menu } from '../components/shared/Icons';
+import { AppState } from '../hooks/useAppState';
 
 export default function Home() {
   const { state, updateState, nextScreen, prevScreen } = useAppState();
@@ -27,6 +27,7 @@ export default function Home() {
   const [hourlyData, setHourlyData] = useState<any[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
     setHydrated(true);
@@ -51,6 +52,7 @@ export default function Home() {
 
   const handleLocationSelect = (lat: number, lon: number) => {
     refreshData(lat, lon);
+    setActiveTab('forecast');
   };
 
   if (!hydrated) return null;
@@ -114,30 +116,29 @@ export default function Home() {
   const isNextDisabled = state.currentScreen === 1 && !state.persona;
 
   const mobileContent = (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-slate-50">
       {state.currentScreen > 2 && (
         <>
-            <div className="fixed top-6 left-6 z-[55]">
-                <button 
-                  onClick={() => setIsDrawerOpen(true)}
-                  className="p-3 glass glass--rounded shadow-xl text-slate-900 active:scale-95 transition-all"
-                >
-                    <Menu size={20} />
-                </button>
-            </div>
             <Header 
-              city={weather.city} level={risk.level} temp={weather.temp} 
-              dataSource={weather.dataSource} updatedAt={weather.updatedAt} 
+              city={weather.city} 
+              level={risk.level} 
+              temp={weather.temp} 
+              dataSource={weather.dataSource || 'open-meteo'} 
+              updatedAt={weather.updatedAt} 
+              onMenuClick={() => setIsDrawerOpen(true)}
             />
             <Drawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}>
-                <VerticalNav activeTab={activeTab} onTabChange={setActiveTab} onClose={() => setIsDrawerOpen(false)} />
+                <div className="h-full p-4">
+                    <VerticalNav activeTab={activeTab} onTabChange={setActiveTab} onClose={() => setIsDrawerOpen(false)} />
+                </div>
             </Drawer>
         </>
       )}
+      
       <main className="flex-1 overflow-y-auto no-scrollbar">
         {renderScreen()}
       </main>
-      
+
       {state.currentScreen <= 2 && (
         <StepperNav 
             currentScreen={state.currentScreen}
@@ -152,6 +153,30 @@ export default function Home() {
   );
 
   if (isDesktop) {
+    // If we're still in onboarding phase on desktop, show the form
+    if (state.currentScreen <= 2) {
+      return (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
+          <Head>
+            <title>Setup | TAAPMAAN</title>
+          </Head>
+          <div className="w-full max-w-2xl bg-white rounded-[4rem] shadow-2xl p-12 animate-in fade-in zoom-in-95 duration-500">
+            {renderScreen()}
+            <div className="mt-12">
+              <StepperNav 
+                  currentScreen={state.currentScreen}
+                  totalScreens={2}
+                  onNext={nextScreen}
+                  onBack={prevScreen}
+                  nextDisabled={isNextDisabled}
+                  nextLabel={state.currentScreen === 2 ? "Launch Dashboard →" : "Next Step"}
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-slate-50 overflow-hidden">
         <Head>
@@ -168,6 +193,8 @@ export default function Home() {
           onLocationSelect={handleLocationSelect}
           activeTab={activeTab}
           onTabChange={setActiveTab}
+          state={state}
+          updateState={updateState}
         />
       </div>
     );

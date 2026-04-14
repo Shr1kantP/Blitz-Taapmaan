@@ -16,11 +16,15 @@ const VerticalNav: React.FC<VerticalNavProps> = ({ activeTab, onTabChange, onClo
   ];
 
   return (
-    <div className="flex flex-col h-full bg-white lg:bg-slate-50/50">
-      <div className="p-8 flex items-center justify-between">
+    <div className={`transition-all duration-500 flex flex-col items-center ${
+        onClose 
+            ? 'h-full w-full bg-white' 
+            : 'h-[calc(100vh-64px)] my-8 ml-8 w-72 rounded-[3rem] bg-white/80 backdrop-blur-2xl border border-slate-200/50 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.05)]'
+    }`}>
+      <div className="p-10 flex items-center justify-between w-full px-8 mb-12">
         <div className="flex flex-col">
-            <h1 className="text-2xl font-black tracking-tighter text-slate-900 leading-none">TAAPMAAN</h1>
-            <p className="text-[10px] font-black uppercase text-brand-orange tracking-widest mt-1">Safety Console</p>
+            <h1 className="text-xl font-black tracking-tighter text-slate-900 leading-none">TAAPMAAN</h1>
+            <p className="text-[8px] font-black uppercase text-brand-orange tracking-[0.3em] mt-1">Safety Console</p>
         </div>
         {onClose && (
             <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl lg:hidden">
@@ -29,8 +33,8 @@ const VerticalNav: React.FC<VerticalNavProps> = ({ activeTab, onTabChange, onClo
         )}
       </div>
 
-      <div className="flex-1 px-4 space-y-2">
-        <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Navigation</p>
+      <div className="flex-1 px-4 space-y-2 w-full">
+        <p className="px-4 text-[10px] font-black text-white/40 uppercase tracking-widest mb-4">Navigation</p>
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = activeTab === link.id;
@@ -42,10 +46,10 @@ const VerticalNav: React.FC<VerticalNavProps> = ({ activeTab, onTabChange, onClo
                 onTabChange(link.id);
                 onClose?.();
               }}
-              className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all ${
+              className={`flex items-center w-full gap-4 px-6 py-4 rounded-[1.5rem] mb-2 font-bold transition-all duration-300 ${
                 isActive 
-                  ? 'bg-slate-900 text-white shadow-xl translate-x-1' 
-                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+                  ? 'bg-slate-900 text-white shadow-xl shadow-slate-900/20 scale-[1.02] z-10' 
+                  : 'text-slate-400 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
               <Icon size={20} />
@@ -55,16 +59,16 @@ const VerticalNav: React.FC<VerticalNavProps> = ({ activeTab, onTabChange, onClo
         })}
       </div>
 
-      <div className="p-8 border-t border-slate-100">
-        <div className="glass glass--rounded-xl p-6 space-y-4">
+      <div className="p-6 w-full mt-auto">
+        <div className="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100/50 space-y-4">
             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white font-black">S</div>
+                <div className="w-12 h-12 bg-emerald-500 rounded-2xl flex items-center justify-center text-white font-black shrink-0 border-2 border-white shadow-lg shadow-emerald-500/10">S</div>
                 <div>
                     <p className="text-xs font-black text-slate-900">Shrikant</p>
-                    <p className="text-[10px] font-bold text-emerald-600 uppercase">Live Connection</p>
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-tight">Live Connection</p>
                 </div>
             </div>
-            <button className="w-full py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">
+            <button className="w-full py-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-900 transition-colors">
                 Sign Out
             </button>
         </div>
