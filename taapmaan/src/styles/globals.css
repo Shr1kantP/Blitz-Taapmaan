@@ -34,7 +34,7 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: white;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: Georgia, 'Times New Roman', Times, serif;
   overflow-x: hidden;
 }
 

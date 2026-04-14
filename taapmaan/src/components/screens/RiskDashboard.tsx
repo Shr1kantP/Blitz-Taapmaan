@@ -14,12 +14,38 @@ interface RiskDashboardProps {
   level: RiskLevel;
   persona: UserProfile | null;
   duration: ExposureDuration;
+  hourly?: any[];
   activity?: string;
   phoneNumber?: string;
   reasons: string[];
   onViewTimeline: () => void;
   onLocationSelect?: (lat: number, lon: number) => void;
 }
+
+const getThermalInsights = (hourly?: any[]) => {
+  if (!hourly || hourly.length === 0) return { peak: '02:00 PM', optimal: '06:00 AM - 09:45 AM' };
+  
+  let max = hourly[0];
+  hourly.forEach(h => { if (h && h.temp > max.temp) max = h; });
+
+  const safeLimit = 31;
+  const safeMorning = hourly.filter(h => {
+    if (!h || !h.hour) return false;
+    const hrRaw = h.hour.split(' ')[0];
+    const isPM = h.hour.includes('PM');
+    let hr = parseInt(hrRaw);
+    if (isPM && hr !== 12) hr += 12;
+    if (!isPM && hr === 12) hr = 0;
+    return hr >= 6 && hr <= 11 && h.temp <= safeLimit;
+  });
+
+  const optimalEnd = safeMorning.length > 0 ? safeMorning[safeMorning.length - 1].hour : '09:30 AM';
+  
+  return { 
+    peak: max?.hour || '02:00 PM', 
+    optimal: `06:00 AM - ${optimalEnd}` 
+  };
+};
 
 const getMeasures = (level: RiskLevel, persona: UserProfile | null, duration: ExposureDuration) => {
   const measures = [
@@ -52,9 +78,10 @@ const getMeasures = (level: RiskLevel, persona: UserProfile | null, duration: Ex
 };
 
 const RiskDashboard: React.FC<RiskDashboardProps> = ({
-  weather, score, level, persona, duration, activity, phoneNumber, reasons, onViewTimeline, onLocationSelect
+  weather, score, level, persona, duration, hourly, activity, phoneNumber, reasons, onViewTimeline, onLocationSelect
 }) => {
   const measures = getMeasures(level, persona, duration);
+  const insights = getThermalInsights(hourly);
   
   const handleSMSShare = () => {
     const text = getPersonalizedAlertMessage(weather.city, score, level, persona, duration, activity);
@@ -124,10 +151,11 @@ const RiskDashboard: React.FC<RiskDashboardProps> = ({
               <div className="bg-white p-8 rounded-none border border-slate-100 shadow-sm flex flex-col justify-between">
                   <div>
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2">Optimal Window</p>
-                    <p className="text-sm font-black text-brand-orange italic uppercase">06:00 - 09:45</p>
+                    <p className="text-sm font-black text-brand-orange italic uppercase">{insights.optimal}</p>
                   </div>
-                  <div className="mt-4 pt-4 border-t border-slate-50">
-                      <span className="text-[8px] font-black text-slate-300 uppercase">Morning Cycle</span>
+                  <div className="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
+                      <span className="text-[8px] font-black text-slate-300 uppercase italic">Peak: {insights.peak}</span>
+                      <div className="h-1.5 w-1.5 bg-brand-orange rounded-none animate-pulse" />
                   </div>
               </div>
           </div>

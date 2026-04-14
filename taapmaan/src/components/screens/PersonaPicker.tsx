@@ -8,7 +8,7 @@ interface PersonaPickerProps {
 }
 
 const personas = [
-  { id: 'outdoor_worker', name: 'Outdoor Worker', icon: <HardHat />, note: 'Duration penalty applies' },
+  { id: 'outdoor_worker', name: 'Outdoor Worker', icon: <HardHat />, note: '' },
   { id: 'elderly', name: 'Elderly (65+)', icon: <User />, note: '10% higher sensitivity' },
   { id: 'child', name: 'Child', icon: <Baby />, note: '-5°F threshold adjustment' },
   { id: 'general', name: 'General Public', icon: <Users />, note: 'Standard risk profile' },

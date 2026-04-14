@@ -8,6 +8,31 @@ import VerticalNav from '../shared/VerticalNav';
 import ConditionsInput from '../screens/ConditionsInput';
 import { AppState } from '../../hooks/useAppState';
 
+const getThermalInsights = (hourly?: any[]) => {
+  if (!hourly || hourly.length === 0) return { peak: '02:00 PM', optimal: '06:00 AM - 09:45 AM' };
+  
+  let max = hourly[0];
+  hourly.forEach(h => { if (h && h.temp > max.temp) max = h; });
+
+  const safeLimit = 31;
+  const safeMorning = hourly.filter(h => {
+    if (!h || !h.hour) return false;
+    const hrRaw = h.hour.split(' ')[0];
+    const isPM = h.hour.includes('PM');
+    let hr = parseInt(hrRaw);
+    if (isPM && hr !== 12) hr += 12;
+    if (!isPM && hr === 12) hr = 0;
+    return hr >= 6 && hr <= 11 && h.temp <= safeLimit;
+  });
+
+  const optimalEnd = safeMorning.length > 0 ? safeMorning[safeMorning.length - 1].hour : '09:30 AM';
+  
+  return { 
+    peak: max?.hour || '02:00 PM', 
+    optimal: `06:00 AM - ${optimalEnd}` 
+  };
+};
+
 const getMeasures = (level: RiskLevel, persona: UserProfile | null, duration: ExposureDuration) => {
   const measures = [
     { title: "Hydration", desc: "Drink 250ml every 20 mins", icon: <Droplet size={20} /> },
@@ -58,6 +83,7 @@ const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
   state, updateState
 }) => {
   const measures = getMeasures(level, persona, duration);
+  const insights = getThermalInsights(hourly);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -110,10 +136,11 @@ const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
                 <div className="col-span-12 xl:col-span-4 bg-emerald-500 rounded-none p-12 text-white flex flex-col justify-between shadow-2xl shadow-emerald-500/20">
                     <h3 className="text-xs font-black uppercase tracking-widest opacity-60">Smart Window</h3>
                     <div className="my-8">
-                        <p className="text-3xl font-black leading-tight tracking-tight">Best safe hours:<br/> <span className="text-emerald-900">06:00 – 09:45</span></p>
+                        <p className="text-3xl font-black leading-tight tracking-tight">Best safe hours:<br/> <span className="text-emerald-900">{insights.optimal}</span></p>
                     </div>
-                    <div className="p-4 bg-white/10 rounded-none border border-white/10 text-xs font-bold leading-relaxed">
-                        Risk levels are currently 40% lower during early morning hours.
+                    <div className="p-4 bg-white/10 rounded-none border border-white/10 text-xs font-bold leading-relaxed flex justify-between items-center">
+                        <span>Peak: {insights.peak}</span>
+                        <div className="h-1.5 w-1.5 bg-white rounded-none animate-pulse" />
                     </div>
                 </div>
 

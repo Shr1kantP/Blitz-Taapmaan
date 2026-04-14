@@ -88,6 +88,7 @@ export default function Home() {
             reasons={risk.reasons}
             persona={state.persona}
             duration={state.exposureDuration}
+            hourly={hourlyData}
             activity={state.activityType}
             phoneNumber={state.phoneNumber}
             onViewTimeline={() => setActiveTab('forecast')}
