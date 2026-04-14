@@ -1,6 +1,6 @@
 import React from 'react';
 import { WeatherData, RiskLevel, UserProfile, ExposureDuration } from '../../types/weather';
-import { Users, MapPin, Droplet, ShieldCheck, Thermometer, Sun } from '../shared/Icons';
+import { Users, MapPin, Droplet, ShieldCheck, Thermometer, Sun, AlertTriangle, Clock } from '../shared/Icons';
 import HeatMap from '../shared/HeatMap';
 import HourlyTimeline from '../screens/HourlyTimeline';
 import AIChatScreen from '../screens/AIChatScreen';
@@ -8,31 +8,34 @@ import VerticalNav from '../shared/VerticalNav';
 import ConditionsInput from '../screens/ConditionsInput';
 import { AppState } from '../../hooks/useAppState';
 
-const getMeasures = (level: RiskLevel) => {
-  const base = [
+const getMeasures = (level: RiskLevel, persona: UserProfile | null, duration: ExposureDuration) => {
+  const measures = [
     { title: "Hydration", desc: "Drink 250ml every 20 mins", icon: <Droplet size={20} /> },
-    { title: "Clothing", desc: "Wear loose cotton fabrics", icon: <ShieldCheck size={20} /> },
   ];
 
-  if (level === 'extreme') {
-    return [
-      { title: "Critical Cooling", desc: "Seek AC/Ice immediately", icon: <Thermometer size={20} /> },
-      { title: "Stop Activity", desc: "Suspend all outdoor work", icon: <Sun size={20} /> },
-      ...base
-    ];
+  // Persona Specifics
+  if (persona === 'elderly') {
+    measures.push({ title: "Heart Check", desc: "Monitor heart rate", icon: <AlertTriangle size={20} /> });
+    measures.push({ title: "Cooling", desc: "Seek AC refuge now", icon: <ShieldCheck size={20} /> });
+  } else if (persona === 'child') {
+    measures.push({ title: "No Cars", desc: "Never stay in car", icon: <AlertTriangle size={20} /> });
+    measures.push({ title: "Activity", desc: "Quiet indoor play", icon: <Sun size={20} /> });
+  } else if (persona === 'outdoor_worker') {
+    measures.push({ title: "Rest Cycle", desc: "15m shade per hour", icon: <Clock size={20} /> });
+    measures.push({ title: "Buddy System", desc: "Watch team members", icon: <Users size={20} /> });
+    measures.push({ title: "Salts", desc: "Replace electrolytes", icon: <Droplet size={20} /> });
+  } else {
+    measures.push({ title: "Clothing", desc: "Wear light cotton", icon: <ShieldCheck size={20} /> });
   }
-  if (level === 'high') {
-    return [
-      { title: "Strict Interval", desc: "15 min shade per hour", icon: <Thermometer size={20} /> },
-      { title: "Sun Block", desc: "Apply SPF 50+ every 2h", icon: <Sun size={20} /> },
-      ...base
-    ];
+
+  // Exposure & Risk Escalation
+  if (level === 'extreme' || (level === 'high' && duration === 'over_60')) {
+    measures.unshift({ title: "Stop Activity", desc: "Suspend all exposure", icon: <Sun size={20} className="text-red-500" /> });
+  } else if (level === 'high' || (level === 'moderate' && persona === 'elderly')) {
+    measures.unshift({ title: "Search Refuge", desc: "Find cooling center", icon: <MapPin size={20} /> });
   }
-  return [
-    { title: "Active Monitor", desc: "Check HR every 30 mins", icon: <Thermometer size={20} /> },
-    { title: "UV Guard", desc: "Wear a wide-brimmed hat", icon: <Sun size={20} /> },
-    ...base
-  ];
+
+  return measures;
 };
 
 interface DesktopDashboardProps {
@@ -54,6 +57,8 @@ const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
   weather, score, level, reasons, persona, duration, hourly, onLocationSelect, activeTab, onTabChange,
   state, updateState
 }) => {
+  const measures = getMeasures(level, persona, duration);
+
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
@@ -66,7 +71,7 @@ const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
                    <p className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-2">Real-time localized heat intelligence</p>
                 </div>
                 <div className="flex gap-4">
-                    <div className="px-6 py-3 bg-white rounded-2xl border border-slate-100 flex items-center gap-3">
+                    <div className="px-6 py-3 bg-white rounded-none border border-slate-100 flex items-center gap-3">
                         <Users size={16} className="text-brand-orange" />
                         <span className="text-sm font-black text-slate-900 capitalize">{persona?.replace('_', ' ')}</span>
                     </div>
@@ -76,14 +81,14 @@ const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
              {/* Main Analytics Grid */}
              <div className="grid grid-cols-12 gap-8">
                 {/* Score Card */}
-                <div className="col-span-12 xl:col-span-8 bg-slate-900 rounded-[3rem] p-12 text-white relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-80 h-80 bg-brand-orange/20 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-brand-orange/30 transition-all duration-1000" />
+                <div className="col-span-12 xl:col-span-8 bg-slate-900 rounded-none p-12 text-white relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-80 h-80 bg-brand-orange/20 blur-[100px] rounded-none -translate-y-1/2 translate-x-1/2 group-hover:bg-brand-orange/30 transition-all duration-1000" />
                     <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-12">
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.4em] mb-4 opacity-50">Current Heat Risk</p>
                             <div className="flex items-baseline gap-4">
                                 <span className="text-9xl font-black italic tracking-tighter">{score}°</span>
-                                <div className={`px-6 py-2 rounded-2xl border font-black uppercase text-sm ${
+                                <div className={`px-6 py-2 rounded-none border font-black uppercase text-sm ${
                                     level === 'extreme' ? 'bg-red-500/20 text-red-100 border-red-500/40' :
                                     level === 'high' ? 'bg-orange-500/20 text-orange-100 border-orange-500/40' :
                                     'bg-emerald-500/20 text-emerald-100 border-emerald-500/40'
@@ -93,7 +98,7 @@ const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
                         </div>
                         <div className="w-full md:w-64 space-y-3">
                             {reasons.slice(1, 4).map((r, i) => (
-                                <div key={i} className="p-4 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-sm text-xs font-medium text-slate-300">
+                                <div key={i} className="p-4 bg-white/5 rounded-none border border-white/5 backdrop-blur-sm text-xs font-medium text-slate-300">
                                     {r}
                                 </div>
                             ))}
@@ -102,18 +107,18 @@ const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
                 </div>
 
                 {/* Optimal Window Card */}
-                <div className="col-span-12 xl:col-span-4 bg-emerald-500 rounded-[3rem] p-12 text-white flex flex-col justify-between shadow-2xl shadow-emerald-500/20">
+                <div className="col-span-12 xl:col-span-4 bg-emerald-500 rounded-none p-12 text-white flex flex-col justify-between shadow-2xl shadow-emerald-500/20">
                     <h3 className="text-xs font-black uppercase tracking-widest opacity-60">Smart Window</h3>
                     <div className="my-8">
                         <p className="text-3xl font-black leading-tight tracking-tight">Best safe hours:<br/> <span className="text-emerald-900">06:00 – 09:45</span></p>
                     </div>
-                    <div className="p-4 bg-white/10 rounded-2xl border border-white/10 text-xs font-bold leading-relaxed">
+                    <div className="p-4 bg-white/10 rounded-none border border-white/10 text-xs font-bold leading-relaxed">
                         Risk levels are currently 40% lower during early morning hours.
                     </div>
                 </div>
 
                 {/* Environmental Focus - Map */}
-                <div className="col-span-12 xl:col-span-9 h-[500px] bg-white rounded-[3.5rem] border border-slate-100 p-4 shadow-sm relative group overflow-hidden">
+                <div className="col-span-12 xl:col-span-9 h-[500px] bg-white rounded-none border border-slate-100 p-4 shadow-sm relative group overflow-hidden">
                     <HeatMap 
                       centerLat={weather.lat || 19.0760} 
                       centerLon={weather.lon || 72.8777} 
@@ -128,14 +133,14 @@ const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
                     <div>
                         <h3 className="text-xs font-black uppercase tracking-[0.3em] text-slate-400 px-4 mb-6">Safety Command</h3>
                         <div className="space-y-4">
-                            {getMeasures(level).map((m, i) => (
-                                <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex items-center gap-5 hover:border-brand-orange/20 transition-all cursor-default group">
-                                    <div className="p-3 bg-slate-50 text-slate-400 rounded-xl group-hover:bg-brand-orange group-hover:text-white transition-all">
+                            {measures.map((m, i) => (
+                                <div key={i} className="bg-white p-6 rounded-none border border-slate-100 shadow-sm flex items-center gap-5 hover:border-brand-orange/20 transition-all cursor-default group">
+                                    <div className="p-3 bg-slate-50 text-slate-400 rounded-none group-hover:bg-brand-orange group-hover:text-white transition-all">
                                         {m.icon}
                                     </div>
                                     <div>
                                         <h4 className="text-xs font-black text-slate-900 mb-0.5">{m.title}</h4>
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{m.desc.split(' ')[0]} {m.desc.split(' ')[1]}</p>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{m.desc}</p>
                                     </div>
                                 </div>
                             ))}
@@ -161,6 +166,33 @@ const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
                 </div>
              </div>
           </div>
+        );
+      case 'map':
+        return (
+            <div className="h-[calc(100vh-160px)] w-full animate-in fade-in slide-in-from-right-8 duration-700">
+                <div className="h-full w-full rounded-[4rem] overflow-hidden shadow-2xl relative border-[12px] border-white ring-1 ring-slate-200/50">
+                    <HeatMap 
+                        centerLat={weather.lat} 
+                        centerLon={weather.lon} 
+                        intensity={score} 
+                        weather={weather}
+                        onLocationSelect={(lat, lon) => {
+                            onLocationSelect?.(lat, lon);
+                            onTabChange('forecast');
+                        }}
+                    />
+                    <div className="absolute top-10 left-10 z-[100] pointer-events-none">
+                        <div className="bg-white/90 backdrop-blur-xl p-8 rounded-[3rem] shadow-2xl border border-white">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-2">Live Probing</p>
+                            <h2 className="text-3xl font-black text-slate-900 tracking-tighter italic leading-none">Regional Explorer</h2>
+                            <div className="flex items-center gap-3 mt-6 pt-6 border-t border-slate-100">
+                                <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
+                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">{weather.city} Monitoring Station</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         );
       case 'forecast':
         return (

@@ -9,6 +9,7 @@ export function useAppState() {
     humidity: 65,
     exposureDuration: "30_60",
     activityType: "walking",
+    phoneNumber: "",
     currentScreen: 1,
   });
 

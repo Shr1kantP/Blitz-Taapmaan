@@ -34,5 +34,6 @@ export interface AppState {
   humidity: number;
   exposureDuration: ExposureDuration;
   activityType: ActivityType;
+  phoneNumber?: string;
   currentScreen: 1 | 2 | 3 | 4;
 }

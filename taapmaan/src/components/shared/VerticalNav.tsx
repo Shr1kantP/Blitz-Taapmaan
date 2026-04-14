@@ -1,5 +1,4 @@
-import React from 'react';
-import { Home, BarChart3, MessageSquare, Menu, X, Users, Settings } from '../shared/Icons';
+import { Home, BarChart3, MessageSquare, Menu, X, Users, Settings, MapPin } from '../shared/Icons';
 
 interface VerticalNavProps {
   activeTab: string;
@@ -10,16 +9,17 @@ interface VerticalNavProps {
 const VerticalNav: React.FC<VerticalNavProps> = ({ activeTab, onTabChange, onClose }) => {
   const links = [
     { id: 'home', label: 'Safety Dashboard', icon: Home },
+    { id: 'map', label: 'Safety Map', icon: MapPin },
     { id: 'forecast', label: 'Heat Timeline', icon: BarChart3 },
     { id: 'chat', label: 'AI Safety Pilot', icon: MessageSquare },
-    { id: 'settings', label: 'Account Profile', icon: GearIcon },
+    { id: 'settings', label: 'Account Profile', icon: Settings },
   ];
 
   return (
     <div className={`transition-all duration-500 flex flex-col items-center ${
         onClose 
             ? 'h-full w-full bg-white' 
-            : 'h-[calc(100vh-64px)] my-8 ml-8 w-72 rounded-[3rem] bg-white/80 backdrop-blur-2xl border border-slate-200/50 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.05)]'
+            : 'h-[calc(100vh-64px)] my-8 ml-8 w-72 rounded-xl bg-white/80 backdrop-blur-2xl border border-slate-200/50 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.05)]'
     }`}>
       <div className="p-10 flex items-center justify-between w-full px-8 mb-12">
         <div className="flex flex-col">
@@ -46,7 +46,7 @@ const VerticalNav: React.FC<VerticalNavProps> = ({ activeTab, onTabChange, onClo
                 onTabChange(link.id);
                 onClose?.();
               }}
-              className={`flex items-center w-full gap-4 px-6 py-4 rounded-[1.5rem] mb-2 font-bold transition-all duration-300 ${
+              className={`flex items-center w-full gap-4 px-6 py-4 rounded-xl mb-2 font-bold transition-all duration-300 ${
                 isActive 
                   ? 'bg-slate-900 text-white shadow-xl shadow-slate-900/20 scale-[1.02] z-10' 
                   : 'text-slate-400 hover:bg-slate-50 hover:text-slate-900'

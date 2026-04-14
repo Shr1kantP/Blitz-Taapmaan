@@ -24,8 +24,8 @@ const WeatherGrid: React.FC<WeatherGridProps> = ({ weather }) => {
   return (
     <div className="grid grid-cols-2 gap-4">
       {stats.map((stat, i) => (
-        <div key={i} className="bg-slate-900 p-5 rounded-[2rem] border border-slate-800 flex flex-col gap-3 shadow-lg">
-          <div className="bg-slate-800 w-10 h-10 rounded-2xl flex items-center justify-center">
+        <div key={i} className="bg-slate-900 p-5 rounded-none border border-slate-800 flex flex-col gap-3 shadow-lg">
+          <div className="bg-slate-800 w-10 h-10 rounded-none flex items-center justify-center">
             {stat.icon}
           </div>
           <div>

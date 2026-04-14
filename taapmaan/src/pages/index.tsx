@@ -18,6 +18,7 @@ import PhoneFrame from '../components/desktop/PhoneFrame';
 import DesktopDashboard from '../components/desktop/DesktopDashboard';
 import Drawer from '../components/shared/Drawer';
 import VerticalNav from '../components/shared/VerticalNav';
+import HeatMap from '../components/shared/HeatMap';
 import { AppState } from '../hooks/useAppState';
 
 export default function Home() {
@@ -71,6 +72,7 @@ export default function Home() {
         <ConditionsInput 
           city={state.city} temp={weather.temp} humidity={weather.humidity} 
           duration={state.exposureDuration} activity={state.activityType}
+          phoneNumber={state.phoneNumber}
           onChange={updateState} 
         />
     );
@@ -86,9 +88,29 @@ export default function Home() {
             reasons={risk.reasons}
             persona={state.persona}
             duration={state.exposureDuration}
+            activity={state.activityType}
+            phoneNumber={state.phoneNumber}
             onViewTimeline={() => setActiveTab('forecast')}
             onLocationSelect={handleLocationSelect}
           />
+        );
+      case 'map':
+        return (
+          <div className="h-[calc(100vh-140px)] w-full p-4 animate-in fade-in zoom-in-95 duration-700">
+            <div className="h-full w-full rounded-none overflow-hidden shadow-2xl border-4 border-white">
+                <HeatMap 
+                    centerLat={weather.lat} 
+                    centerLon={weather.lon} 
+                    intensity={risk.score}
+                    weather={weather}
+                    onLocationSelect={handleLocationSelect}
+                />
+            </div>
+            <div className="mt-6 px-4">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Map Explorer</p>
+                <p className="text-xl font-black text-slate-900 leading-tight mt-1 italic">Atmospheric Probing:<br/><span className="text-brand-orange uppercase not-italic text-sm">{weather.city} Sector</span></p>
+            </div>
+          </div>
         );
       case 'forecast':
         return <HourlyTimeline hourly={hourlyData} />;
@@ -98,10 +120,10 @@ export default function Home() {
         return (
           <div className="p-10 text-center space-y-6">
             <h2 className="text-3xl font-black">Preferences</h2>
-            <div className="p-8 glass glass--rounded-xl space-y-4">
+            <div className="p-8 glass glass--rounded-none space-y-4">
                 <button 
                   onClick={() => { updateState({ currentScreen: 1 }); setActiveTab('home'); }}
-                  className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold"
+                  className="w-full py-4 bg-slate-900 text-white rounded-none font-bold"
                 >
                     Reset Persona Profile
                 </button>
@@ -160,7 +182,7 @@ export default function Home() {
           <Head>
             <title>Setup | TAAPMAAN</title>
           </Head>
-          <div className="w-full max-w-2xl bg-white rounded-[4rem] shadow-2xl p-12 animate-in fade-in zoom-in-95 duration-500">
+          <div className="w-full max-w-2xl bg-white rounded-none shadow-2xl p-12 animate-in fade-in zoom-in-95 duration-500">
             {renderScreen()}
             <div className="mt-12">
               <StepperNav 

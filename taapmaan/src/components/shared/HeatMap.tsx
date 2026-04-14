@@ -84,7 +84,7 @@ const HeatMap: React.FC<HeatMapProps> = ({
     }).addTo(map);
 
     const tooltipContent = `
-      <div class="p-4 bg-slate-900/95 backdrop-blur-xl text-white rounded-[1.5rem] border border-white/20 shadow-2xl min-w-[200px] pointer-events-none">
+      <div class="p-4 bg-slate-900/95 backdrop-blur-xl text-white rounded-xl border border-white/20 shadow-2xl min-w-[200px] pointer-events-none">
         <div class="flex justify-between items-start mb-3">
           <div>
             <p class="text-[10px] font-black uppercase tracking-widest text-brand-orange">${type}</p>
@@ -235,7 +235,7 @@ const HeatMap: React.FC<HeatMapProps> = ({
 
   return (
     <>
-      <div className="relative w-full h-full bg-slate-50 rounded-[2.5rem] overflow-hidden shadow-2xl border border-gray-100 group transition-transform active:scale-[0.98]">
+      <div className="relative w-full h-full bg-slate-50 rounded-xl overflow-hidden shadow-2xl border border-gray-100 group transition-transform active:scale-[0.98]">
         <div ref={mapRef} className="w-full h-full z-0" />
         <div className="absolute top-6 left-6 z-10 pointer-events-none">
           <span className="flex items-center gap-2 px-4 py-2 glass glass--rounded shadow-sm">
@@ -254,34 +254,51 @@ const HeatMap: React.FC<HeatMapProps> = ({
       </div>
 
       {isExpanded && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-12 animate-in fade-in duration-300">
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl" onClick={() => setIsExpanded(false)} />
-          <div className="relative w-full max-w-7xl h-full max-h-[90vh] bg-white rounded-[4rem] shadow-2xl border border-white/20 overflow-hidden animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-0 lg:p-12 animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" onClick={() => setIsExpanded(false)} />
+          <div className="relative w-full h-full lg:max-w-7xl lg:max-h-[90vh] bg-white lg:rounded-xl shadow-2xl border-white/20 overflow-hidden animate-in slide-in-from-bottom-10 lg:zoom-in-95 duration-500">
             <div ref={modalMapRef} className="w-full h-full" />
-            <div className="absolute top-8 left-8 right-8 flex justify-between items-center z-[10001] pointer-events-none">
-              <div className="glass glass--rounded-xl px-8 py-4 shadow-xl border border-gray-100 pointer-events-auto">
-                <h2 className="text-2xl font-black text-slate-900 tracking-tighter italic">Live Atmospheric Probing</h2>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Status: Monitoring micro-climate zones</p>
+            
+            {/* Minimal Status Bar */}
+            <div className="absolute top-6 left-6 right-6 flex justify-between items-start z-[10001] pointer-events-none">
+              <div className="bg-white/90 backdrop-blur-xl px-5 py-3 rounded-2xl shadow-xl border border-slate-100 pointer-events-auto">
+                <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
+                    <h2 className="text-[10px] font-black text-slate-900 tracking-tighter uppercase italic">Live Probe: {weather?.city || 'Sector'}</h2>
+                </div>
               </div>
+              
               <button
                 onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
-                className="p-5 glass glass--rounded shadow-2xl border border-gray-100 pointer-events-auto hover:bg-slate-50 active:scale-90 transition-all"
+                className="w-10 h-10 flex items-center justify-center bg-slate-900 text-white rounded-full shadow-2xl pointer-events-auto active:scale-90 transition-all"
               >
-                <X size={32} />
+                <X size={20} />
               </button>
             </div>
-            <div className="absolute bottom-10 left-10 z-[10001] glass glass--rounded-xl p-8 border border-gray-100 shadow-xl max-w-sm pointer-events-auto">
-              <p className="text-xs font-black text-brand-orange uppercase tracking-widest mb-2">Micro-Climate Assessment</p>
-              <p className="text-sm font-medium text-slate-600 leading-relaxed mb-6">
-                Active thermal scanning detected high-intensity interference in urban sectors. Tracking {MUMBAI_MICRO_ZONES.length} localized hotspots for real-time safety.
-              </p>
-              <div className="space-y-3 pt-6 border-t border-slate-100">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Real-Time Heat Color Scale</p>
-                <div className="flex items-center gap-3"><div className="w-4 h-4 rounded-full bg-[#EF4444]" /><span className="text-xs font-bold text-slate-700">Extreme Heat Impact</span></div>
-                <div className="flex items-center gap-3"><div className="w-4 h-4 rounded-full bg-[#F97316]" /><span className="text-xs font-bold text-slate-700">High Risk Zone</span></div>
-                <div className="flex items-center gap-3"><div className="w-4 h-4 rounded-full bg-[#EAB308]" /><span className="text-xs font-bold text-slate-700">Moderate Warning</span></div>
-                <div className="flex items-center gap-3"><div className="w-4 h-4 rounded-full bg-[#22C55E]" /><span className="text-xs font-bold text-slate-700">Safe/Lower Intensity</span></div>
-              </div>
+
+            {/* Tight Legend */}
+            <div className="absolute bottom-10 left-6 right-6 z-[10001] pointer-events-none lg:pointer-events-auto flex flex-col items-start gap-4">
+                <div className="bg-white/95 backdrop-blur-xl p-6 rounded-xl border border-slate-100 shadow-2xl max-w-[280px] pointer-events-auto">
+                    <p className="text-[9px] font-black text-brand-orange uppercase tracking-[0.2em] mb-4">Heat Intensity Scale</p>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                        <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
+                            <span className="text-[8px] font-bold text-slate-700 uppercase">Extreme</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#F97316]" />
+                            <span className="text-[8px] font-bold text-slate-700 uppercase">High</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#EAB308]" />
+                            <span className="text-[8px] font-bold text-slate-700 uppercase">Moderate</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#22C55E]" />
+                            <span className="text-[8px] font-bold text-slate-700 uppercase">Safe</span>
+                        </div>
+                    </div>
+                </div>
             </div>
           </div>
         </div>

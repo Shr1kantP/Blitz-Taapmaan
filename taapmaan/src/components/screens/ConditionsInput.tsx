@@ -8,6 +8,7 @@ interface ConditionsInputProps {
   humidity: number;
   duration: ExposureDuration;
   activity: ActivityType;
+  phoneNumber?: string;
   onChange: (updates: any) => void;
 }
 
@@ -24,7 +25,7 @@ const durations: {id: ExposureDuration, label: string}[] = [
 ];
 
 const ConditionsInput: React.FC<ConditionsInputProps> = ({ 
-  city, temp, humidity, duration, activity, onChange 
+  city, temp, humidity, duration, activity, phoneNumber, onChange 
 }) => {
   const [detecting, setDetecting] = useState(false);
 
@@ -63,18 +64,35 @@ const ConditionsInput: React.FC<ConditionsInputProps> = ({
         <p className="text-slate-500 font-medium text-lg italic">"Heat affects everyone differently. Tell us your plan."</p>
       </div>
 
-      <div className="glass glass--rounded-xl p-6 flex flex-col gap-4 mb-10 shadow-xl border border-white/40">
-        <p className="text-[10px] text-brand-orange font-black uppercase tracking-widest">Target Zone</p>
-        <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-black text-slate-900">{city}</h3>
-            <button 
-                onClick={handleDetect}
-                className={`flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl text-xs font-bold transition-all hover:bg-slate-800 ${detecting ? 'animate-pulse' : ''}`}
-            >
-                <Navigation size={14} />
-                {detecting ? 'Locating...' : 'Refresh'}
-            </button>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+          <div className="glass glass--rounded-xl p-6 flex flex-col gap-4 shadow-xl border border-white/40">
+            <p className="text-[10px] text-brand-orange font-black uppercase tracking-widest">Target Zone</p>
+            <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-black text-slate-900">{city}</h3>
+                <button 
+                    onClick={handleDetect}
+                    className={`flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl text-xs font-bold transition-all hover:bg-slate-800 ${detecting ? 'animate-pulse' : ''}`}
+                >
+                    <Navigation size={14} />
+                    {detecting ? 'Locating...' : 'Refresh'}
+                </button>
+            </div>
+          </div>
+
+          <div className="glass glass--rounded-xl p-6 flex flex-col gap-4 shadow-xl border border-white/40">
+            <p className="text-[10px] text-blue-500 font-black uppercase tracking-widest">Direct Connection</p>
+            <div className="flex items-center gap-4">
+                <div className="flex-1">
+                    <input 
+                        type="tel" 
+                        placeholder="WhatsApp Number (e.g. 919876543210)"
+                        value={phoneNumber || ''}
+                        onChange={(e) => onChange({ phoneNumber: e.target.value })}
+                        className="w-full bg-slate-50 border-none rounded-2xl px-6 py-3 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-blue-100 placeholder:text-slate-300"
+                    />
+                </div>
+            </div>
+          </div>
       </div>
 
       <div className="space-y-12">
@@ -119,7 +137,7 @@ const ConditionsInput: React.FC<ConditionsInputProps> = ({
               <button
                 key={a.id}
                 onClick={() => onChange({ activityType: a.id })}
-                className={`p-6 rounded-[2rem] text-left transition-all border-2 flex items-center justify-between ${
+                className={`p-6 rounded-xl text-left transition-all border-2 flex items-center justify-between ${
                   activity === a.id 
                     ? 'border-brand-orange bg-orange-50/30' 
                     : 'border-slate-50 bg-slate-50/50 grayscale opacity-60 hover:grayscale-0 hover:opacity-100'
