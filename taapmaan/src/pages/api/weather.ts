@@ -33,6 +33,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         sunrise: "6:15 AM",
         sunset: "6:45 PM",
         city: city || `Sector ${zoneId}-B`,
+        lat: latNum,
+        lon: lonNum,
         dataSource: 'api', // Label as API to satisfy the user's need for 'Real-time'
         updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       });
@@ -62,6 +64,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       sunrise: data.sys?.sunrise ? new Date(data.sys.sunrise * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "6:00 AM",
       sunset: data.sys?.sunset ? new Date(data.sys.sunset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "6:00 PM",
       city: data.name || (city as string) || "Mumbai",
+      lat: data.coord?.lat || Number(lat) || 19.0760,
+      lon: data.coord?.lon || Number(lon) || 72.8777,
       dataSource: 'api',
       updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     });

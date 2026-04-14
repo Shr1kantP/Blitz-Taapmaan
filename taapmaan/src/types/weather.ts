@@ -13,6 +13,8 @@ export interface WeatherData {
   sunrise: string;
   sunset: string;
   city: string;
+  lat?: number;
+  lon?: number;
   dataSource: string;
   updatedAt?: string;
 }

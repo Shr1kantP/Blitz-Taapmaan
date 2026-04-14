@@ -11,23 +11,23 @@ interface HeatMapProps {
 }
 
 const MUMBAI_MICRO_ZONES = [
-    { name: "Colaba", lat: 18.9067, lon: 72.8147 },
-    { name: "Worli", lat: 19.0176, lon: 72.8174 },
-    { name: "Dadar", lat: 19.0178, lon: 72.8478 },
-    { name: "Bandra", lat: 19.0522, lon: 72.8258 },
-    { name: "Juhu", lat: 19.1000, lon: 72.8270 },
-    { name: "Andheri", lat: 19.1200, lon: 72.8500 },
-    { name: "Borivali", lat: 19.2313, lon: 72.8522 },
-    { name: "Thane", lat: 19.2183, lon: 72.9781 },
-    { name: "Navi Mumbai", lat: 19.0330, lon: 73.0297 },
-    { name: "Chembur", lat: 19.0622, lon: 72.8974 },
-    { name: "Powai", lat: 19.1176, lon: 72.9060 },
-    { name: "Sion", lat: 19.0390, lon: 72.8619 },
-    { name: "Goregaon", lat: 19.1663, lon: 72.8450 },
-    { name: "Malad", lat: 19.1874, lon: 72.8484 },
-    { name: "Vashi", lat: 19.0745, lon: 72.9978 },
-    { name: "Lower Parel", lat: 18.9950, lon: 72.8270 },
-    { name: "Kurla", lat: 19.0607, lon: 72.8836 }
+  { name: "Colaba", lat: 18.9067, lon: 72.8147 },
+  { name: "Worli", lat: 19.0176, lon: 72.8174 },
+  { name: "Dadar", lat: 19.0178, lon: 72.8478 },
+  { name: "Bandra", lat: 19.0522, lon: 72.8258 },
+  { name: "Juhu", lat: 19.1000, lon: 72.8270 },
+  { name: "Andheri", lat: 19.1200, lon: 72.8500 },
+  { name: "Borivali", lat: 19.2313, lon: 72.8522 },
+  { name: "Thane", lat: 19.2183, lon: 72.9781 },
+  { name: "Navi Mumbai", lat: 19.0330, lon: 73.0297 },
+  { name: "Chembur", lat: 19.0622, lon: 72.8974 },
+  { name: "Powai", lat: 19.1176, lon: 72.9060 },
+  { name: "Sion", lat: 19.0390, lon: 72.8619 },
+  { name: "Goregaon", lat: 19.1663, lon: 72.8450 },
+  { name: "Malad", lat: 19.1874, lon: 72.8484 },
+  { name: "Vashi", lat: 19.0745, lon: 72.9978 },
+  { name: "Lower Parel", lat: 18.9950, lon: 72.8270 },
+  { name: "Kurla", lat: 19.0607, lon: 72.8836 }
 ];
 
 const HeatMap: React.FC<HeatMapProps> = ({
@@ -46,9 +46,9 @@ const HeatMap: React.FC<HeatMapProps> = ({
   // Hyper-Localized Heat Model (Matches api/weather.ts)
   const getWeightAt = (lat: number, lon: number, baseWeight: number) => {
     const spatialJitter = (
-        Math.sin(lat * 800) * 4 + 
-        Math.cos(lon * 1200) * 3 + 
-        Math.sin((lat + lon) * 400) * 2
+      Math.sin(lat * 800) * 4 +
+      Math.cos(lon * 1200) * 3 +
+      Math.sin((lat + lon) * 400) * 2
     );
     const projectedTemp = baseWeight + spatialJitter;
     return Math.min(1, Math.max(0.1, (projectedTemp - 20) / 25));
@@ -80,41 +80,61 @@ const HeatMap: React.FC<HeatMapProps> = ({
 
     // Plot real micro-zones
     const points: any[] = [];
-    
+
     // Add base data from our micro-zones
     MUMBAI_MICRO_ZONES.forEach(zone => {
-        const weight = getWeightAt(zone.lat, zone.lon, intensity);
-        points.push([zone.lat, zone.lon, weight]);
+      const weight = getWeightAt(zone.lat, zone.lon, intensity);
+      points.push([zone.lat, zone.lon, weight]);
 
-        // Add visual spot (marker)
-        const color = getRiskColor(weight);
-        const marker = L.circleMarker([zone.lat, zone.lon], {
-            radius: isModal ? 8 : 6,
-            fillColor: color,
-            color: '#fff',
-            weight: 2,
-            opacity: 1,
-            fillOpacity: 0.8,
-            className: 'pulse-marker'
-        }).addTo(map);
+      // Add visual spot (marker)
+      const color = getRiskColor(weight);
+      const marker = L.circleMarker([zone.lat, zone.lon], {
+        radius: isModal ? 8 : 6,
+        fillColor: color,
+        color: '#fff',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.8,
+        className: 'pulse-marker'
+      }).addTo(map);
 
-        if (isModal) {
-            marker.bindPopup(`<b>${zone.name}</b><br/>Temp: ${Math.round(weight * 25 + 20)}°C`);
-        }
+      if (isModal) {
+        marker.bindPopup(`<b>${zone.name}</b><br/>Temp: ${Math.round(weight * 25 + 20)}°C`);
+      }
     });
 
     // Also add the user's current center as a spot
     const currentWeight = getWeightAt(centerLat, centerLon, intensity);
     points.push([centerLat, centerLon, currentWeight]);
     L.circleMarker([centerLat, centerLon], {
-        radius: isModal ? 12 : 10,
-        fillColor: getRiskColor(currentWeight),
-        color: '#fff',
-        weight: 3,
-        opacity: 1,
-        fillOpacity: 1,
-        className: 'pulse-marker'
+      radius: isModal ? 12 : 10,
+      fillColor: getRiskColor(currentWeight),
+      color: '#fff',
+      weight: 3,
+      opacity: 1,
+      fillOpacity: 1,
+      className: 'pulse-marker'
     }).addTo(map).bindPopup('<b>Current Focus</b>');
+
+    // Add local jittered spots around the current center for "every corner" feel
+    for (let i = 0; i < 5; i++) {
+      const angle = (i / 5) * Math.PI * 2;
+      const dist = 0.015 + (Math.sin(i * 100) * 0.01);
+      const lLat = centerLat + Math.cos(angle) * dist;
+      const lLon = centerLon + Math.sin(angle) * dist;
+      const lWeight = getWeightAt(lLat, lLon, intensity);
+      points.push([lLat, lLon, lWeight]);
+
+      L.circleMarker([lLat, lLon], {
+        radius: isModal ? 5 : 4,
+        fillColor: getRiskColor(lWeight),
+        color: '#fff',
+        weight: 1,
+        opacity: 0.6,
+        fillOpacity: 0.4,
+        className: 'pulse-marker'
+      }).addTo(map);
+    }
 
     // Heatmap layer for "atmospheric" effect
     const heatmap = L.heatLayer(points, {
@@ -126,7 +146,7 @@ const HeatMap: React.FC<HeatMapProps> = ({
 
     map.addLayer(heatmap);
     map.on('click', (e: any) => onLocationSelect?.(e.latlng.lat, e.latlng.lng));
-    
+
     return map;
   };
 
@@ -135,9 +155,9 @@ const HeatMap: React.FC<HeatMapProps> = ({
 
     // Inject pulse animation CSS
     if (!document.getElementById('map-pulse-styles')) {
-        const style = document.createElement('style');
-        style.id = 'map-pulse-styles';
-        style.innerHTML = `
+      const style = document.createElement('style');
+      style.id = 'map-pulse-styles';
+      style.innerHTML = `
             @keyframes marker-pulse {
                 0% { transform: scale(1); opacity: 0.8; }
                 50% { transform: scale(1.2); opacity: 0.4; }
@@ -148,7 +168,7 @@ const HeatMap: React.FC<HeatMapProps> = ({
                 transform-origin: center;
             }
         `;
-        document.head.appendChild(style);
+      document.head.appendChild(style);
     }
 
     const instance = setupMap(mapRef.current, false);

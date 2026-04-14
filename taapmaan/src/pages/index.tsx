@@ -85,6 +85,7 @@ export default function Home() {
             persona={state.persona}
             duration={state.exposureDuration}
             onViewTimeline={() => setActiveTab('forecast')}
+            onLocationSelect={handleLocationSelect}
           />
         );
       case 'forecast':

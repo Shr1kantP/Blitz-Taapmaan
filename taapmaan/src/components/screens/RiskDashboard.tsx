@@ -15,10 +15,11 @@ interface RiskDashboardProps {
   duration: ExposureDuration;
   reasons: string[];
   onViewTimeline: () => void;
+  onLocationSelect?: (lat: number, lon: number) => void;
 }
 
 const RiskDashboard: React.FC<RiskDashboardProps> = ({
-  weather, score, level, persona, duration, reasons, onViewTimeline
+  weather, score, level, persona, duration, reasons, onViewTimeline, onLocationSelect
 }) => {
   const handleWhatsAppShare = () => {
     const text = `⚠️ *TAAPMAAN Heat Alert*\nRisk: ${level.toUpperCase()}\nHeat Index: ${score}°C\nLocation: ${weather.city}\nStay safe!`;
@@ -28,7 +29,13 @@ const RiskDashboard: React.FC<RiskDashboardProps> = ({
   return (
     <div className="p-6 pb-32 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto max-h-screen">
       <div className="h-64 w-full">
-        <HeatMap />
+        <HeatMap 
+            centerLat={weather.lat} 
+            centerLon={weather.lon} 
+            intensity={score} 
+            weather={weather}
+            onLocationSelect={onLocationSelect}
+        />
       </div>
 
       {/* Main Score Display */}

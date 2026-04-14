@@ -77,8 +77,8 @@ const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="h-[400px]">
                     <HeatMap 
-                      centerLat={19.0760} 
-                      centerLon={72.8777} 
+                      centerLat={weather.lat || 19.0760} 
+                      centerLon={weather.lon || 72.8777} 
                       intensity={score} 
                       weather={weather} 
                       onLocationSelect={onLocationSelect}
