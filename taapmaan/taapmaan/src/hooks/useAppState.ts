@@ -15,6 +15,18 @@ const initialState: AppState = {
 };
 
 export function useAppState() {
+<<<<<<< HEAD:taapmaan/src/hooks/useAppState.ts
+  const [state, setState] = useState<AppState>({
+    persona: null,
+    city: "Mumbai",
+    temp: 32,
+    humidity: 65,
+    exposureDuration: "30_60",
+    activityType: "walking",
+    phoneNumber: "",
+    currentScreen: 1,
+  });
+=======
   const [state, setState] = useState<AppState>(initialState);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -38,6 +50,7 @@ export function useAppState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
   }, [state, isInitialized]);
+>>>>>>> 41d1fb3 (Fixed Notification system):src/hooks/useAppState.ts
 
   const updateState = (updates: Partial<AppState>) => {
     setState(prev => ({ ...prev, ...updates }));

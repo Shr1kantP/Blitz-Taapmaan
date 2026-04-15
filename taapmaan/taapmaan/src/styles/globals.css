@@ -34,7 +34,11 @@
 body {
   color: rgb(var(--foreground-rgb));
   background: white;
+<<<<<<< HEAD:taapmaan/src/styles/globals.css
+  font-family: Georgia, 'Times New Roman', Times, serif;
+=======
   font-family: 'Inter', sans-serif;
+>>>>>>> 41d1fb3 (Fixed Notification system):src/styles/globals.css
   overflow-x: hidden;
 }
 

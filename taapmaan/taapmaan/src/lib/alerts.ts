@@ -14,7 +14,11 @@ export function getPersonalizedAlertMessage(
 
   let greeting = `TAAPMAAN HEAT ALERT - ${city.toUpperCase()}`;
   let stats = `\n\nScale: ${score}C (${level.toUpperCase()})\nProfile: ${personaName.toUpperCase()}\nActivity: ${activityLabel}\nStay: ${exposureTime}m`;
+<<<<<<< HEAD:taapmaan/src/lib/alerts.ts
+  
+=======
 
+>>>>>>> 41d1fb3 (Fixed Notification system):src/lib/alerts.ts
   let advice = "";
 
   if (persona === 'elderly') {

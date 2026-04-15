@@ -55,6 +55,9 @@ export default function Home() {
   // Only navigate to timeline and send notification if user clicked a region (not live location)
   const handleLocationSelect = async (lat: number, lon: number, opts?: { fromMapClick?: boolean }) => {
     refreshData(lat, lon);
+<<<<<<< HEAD:taapmaan/src/pages/index.tsx
+    setActiveTab('forecast');
+=======
     if (opts?.fromMapClick) {
       setActiveTab('forecast');
       // Request notification permission if not already granted
@@ -98,6 +101,7 @@ export default function Home() {
         }
       }
     }
+>>>>>>> 41d1fb3 (Fixed Notification system):src/pages/index.tsx
   };
 
   if (!hydrated || !isInitialized) return null;
