@@ -203,10 +203,7 @@ const DesktopDashboard: React.FC<DesktopDashboardProps> = ({
                         centerLon={weather.lon} 
                         intensity={score} 
                         weather={weather}
-                        onLocationSelect={(lat, lon) => {
-                            onLocationSelect?.(lat, lon);
-                            onTabChange('forecast');
-                        }}
+                        onLocationSelect={onLocationSelect}
                     />
                     <div className="absolute top-10 left-10 z-[100] pointer-events-none">
                         <div className="bg-white/90 backdrop-blur-xl p-8 rounded-[3rem] shadow-2xl border border-white">

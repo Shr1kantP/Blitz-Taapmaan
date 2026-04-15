@@ -12,6 +12,8 @@
     "chart.js": "^4.5.1",
     "clsx": "^2.1.0",
     "frostpane": "^1.2.0",
+    "leaflet": "^1.9.4",
+    "leaflet.heat": "^0.2.0",
     "next": "16.2.3",
     "openmeteo": "^1.2.3",
     "react": "19.2.4",
@@ -20,6 +22,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

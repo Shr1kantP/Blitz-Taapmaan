@@ -3,7 +3,10 @@
     "temp": 29,
     "humidity": 49,
     "feelsLike": 32,
-    "wind": { "speed": 6, "direction": "East" },
+    "wind": {
+      "speed": 6,
+      "direction": "East"
+    },
     "uvIndex": 10,
     "pressure": 1011,
     "sunrise": "06:22 AM",
@@ -13,13 +16,45 @@
     "dataSource": "local_data"
   },
   "hourly": [
-    { "hour": "12 PM", "score": 32, "riskLevel": "high" },
-    { "hour": "3 PM", "score": 31, "riskLevel": "high" },
-    { "hour": "6 PM", "score": 31, "riskLevel": "moderate" },
-    { "hour": "9 PM", "score": 30, "riskLevel": "moderate" },
-    { "hour": "12 AM", "score": 29, "riskLevel": "low" },
-    { "hour": "3 AM", "score": 28, "riskLevel": "low" },
-    { "hour": "6 AM", "score": 28, "riskLevel": "low" },
-    { "hour": "9 AM", "score": 29, "riskLevel": "low" }
+    {
+      "hour": "12 PM",
+      "score": 32,
+      "riskLevel": "high"
+    },
+    {
+      "hour": "3 PM",
+      "score": 31,
+      "riskLevel": "high"
+    },
+    {
+      "hour": "6 PM",
+      "score": 31,
+      "riskLevel": "moderate"
+    },
+    {
+      "hour": "9 PM",
+      "score": 30,
+      "riskLevel": "moderate"
+    },
+    {
+      "hour": "12 AM",
+      "score": 29,
+      "riskLevel": "low"
+    },
+    {
+      "hour": "3 AM",
+      "score": 28,
+      "riskLevel": "low"
+    },
+    {
+      "hour": "6 AM",
+      "score": 28,
+      "riskLevel": "low"
+    },
+    {
+      "hour": "9 AM",
+      "score": 29,
+      "riskLevel": "low"
+    }
   ]
 }

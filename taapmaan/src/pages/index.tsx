@@ -5,6 +5,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import { calculateRisk } from '../lib/heatIndex';
 import { DEFAULT_WEATHER } from '../lib/mockData';
 import { WeatherData } from '../types/weather';
+import { getRiskFromAPI, sendHeatNotification } from '../../lib/notifications';
 
 // Components
 import Header from '../components/shared/Header';
@@ -22,7 +23,7 @@ import HeatMap from '../components/shared/HeatMap';
 import { AppState } from '../hooks/useAppState';
 
 export default function Home() {
-  const { state, updateState, nextScreen, prevScreen } = useAppState();
+  const { state, updateState, nextScreen, prevScreen, isInitialized } = useAppState();
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const [weather, setWeather] = useState<WeatherData>(DEFAULT_WEATHER);
   const [hourlyData, setHourlyData] = useState<any[]>([]);
@@ -51,12 +52,55 @@ export default function Home() {
       .catch(() => {});
   };
 
-  const handleLocationSelect = (lat: number, lon: number) => {
+  // Only navigate to timeline and send notification if user clicked a region (not live location)
+  const handleLocationSelect = async (lat: number, lon: number, opts?: { fromMapClick?: boolean }) => {
     refreshData(lat, lon);
-    setActiveTab('forecast');
+    if (opts?.fromMapClick) {
+      setActiveTab('forecast');
+      // Request notification permission if not already granted
+      if (typeof window !== 'undefined' && window.Notification && Notification.permission !== 'granted') {
+        try { await (await import('../../lib/notifications')).requestNotificationPermission(); } catch {}
+      }
+      // Fire persona-specific push notification for the clicked region.
+      const riskData = await getRiskFromAPI(lat, lon);
+      if (riskData) {
+        // Persona-specific notification body
+        const persona = state.persona || 'general';
+        const activity = state.activityType || '';
+        let personaMsg = '';
+        if (persona === 'elderly') personaMsg = 'Extra caution: Elderly are more sensitive to heat.';
+        else if (persona === 'child') personaMsg = 'Children need frequent hydration and shade.';
+        else if (persona === 'outdoor_worker') personaMsg = 'Outdoor workers: Take regular breaks and hydrate.';
+        else personaMsg = 'Stay safe and hydrated!';
+
+        const emoji = { Low: 'ℹ️', Moderate: '⚠️', High: '🔴', Extreme: '🚨' }[riskData.riskLevel];
+        const title = `${emoji} ${riskData.riskLevel} Heat Risk — ${riskData.areaName}`;
+        const top2Measures = riskData.preventiveMeasures.slice(0, 2).join('; ');
+        const body =
+          `🌡 ${riskData.temperature}°C  💧 ${riskData.humidity}% humidity  ` +
+          `🥵 Heat Index ${riskData.heatIndex}°C\n${top2Measures}\n` +
+          `${personaMsg}` + (activity ? `\nActivity: ${activity}` : '');
+
+        const options = {
+          body,
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          tag: 'tapmaan-risk',
+        };
+
+        // Dynamically import getReadySW from notifications as a named import
+        const { getReadySW } = await import('../../lib/notifications');
+        const registration = await getReadySW();
+        if (registration) {
+          registration.showNotification(title, options);
+        } else if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          new Notification(title, options);
+        }
+      }
+    }
   };
 
-  if (!hydrated) return null;
+  if (!hydrated || !isInitialized) return null;
 
   const risk = calculateRisk(
     state.temp || weather.temp, 
@@ -67,7 +111,7 @@ export default function Home() {
 
   const renderScreen = () => {
     // Stage 1: Onboarding
-    if (state.currentScreen === 1) return <PersonaPicker currentPersona={state.persona} onSelect={(p) => updateState({ persona: p })} />;
+    if (state.currentScreen === 1) return <PersonaPicker selected={state.persona} onSelect={(p) => updateState({ persona: p })} />;
     if (state.currentScreen === 2) return (
         <ConditionsInput 
           city={state.city} temp={weather.temp} humidity={weather.humidity} 

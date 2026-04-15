@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Maximize, X } from './Icons';
+import { Maximize, X, LocateFixed, Loader2 } from './Icons';
 import { WeatherData } from '../../types/weather';
 import { calculateRisk } from '../../lib/heatIndex';
 
@@ -8,7 +8,7 @@ interface HeatMapProps {
   centerLon?: number;
   intensity?: number;
   weather?: WeatherData;
-  onLocationSelect?: (lat: number, lon: number) => void;
+  onLocationSelect?: (lat: number, lon: number, opts?: { fromMapClick?: boolean }) => void;
 }
 
 const MUMBAI_MICRO_ZONES = [
@@ -52,6 +52,69 @@ const HeatMap: React.FC<HeatMapProps> = ({
   const modalMapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
   const modalMapInstance = useRef<any>(null);
+  const [userLocation, setUserLocation] = useState<{lat: number, lon: number} | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [hasAttempted, setHasAttempted] = useState(false);
+
+  const handleLocateMe = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    
+    // Check for Secure Context (Required for Geolocation)
+    if (typeof window !== 'undefined' && window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        alert("Location services require a secure connection (HTTPS). If you are testing locally, please use 'localhost'.");
+        return;
+    }
+
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setIsLocating(true);
+    setHasAttempted(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ lat: latitude, lon: longitude });
+        setIsLocating(false);
+        // Only pass fromMapClick if this was a manual click, not live locate
+        onLocationSelect?.(latitude, longitude, { fromMapClick: false });
+        
+        // Fly to location if map exists
+        if (mapInstance.current) {
+          mapInstance.current.flyTo([latitude, longitude], 14);
+        }
+        if (modalMapInstance.current) {
+          modalMapInstance.current.flyTo([latitude, longitude], 14);
+        }
+      },
+      (error) => {
+        setIsLocating(false);
+        let message = "Unable to retrieve your location.";
+        
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            message = "Location permission denied. Please enable location access in your browser settings.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = "Location information is unavailable. Check your network or GPS.";
+            break;
+          case error.TIMEOUT:
+            message = "Location request timed out. Please try again.";
+            break;
+        }
+        
+        console.error("Geolocation error:", error);
+        alert(message);
+      },
+      { 
+        enableHighAccuracy: true, 
+        timeout: 15000, // Increased timeout to 15s
+        maximumAge: 0 
+      }
+    );
+  };
 
   // Hyper-Localized Heat Model (Matches api/weather.ts)
   const getWeightAt = (lat: number, lon: number, baseWeight: number) => {
@@ -123,7 +186,7 @@ const HeatMap: React.FC<HeatMapProps> = ({
     });
 
     interactionZone.on('click', () => {
-      onLocationSelect?.(zone.lat, zone.lon);
+      onLocationSelect?.(zone.lat, zone.lon, { fromMapClick: true });
     });
   };
 
@@ -176,7 +239,23 @@ const HeatMap: React.FC<HeatMapProps> = ({
     });
 
     map.addLayer(heatmap);
-    map.on('click', (e: any) => onLocationSelect?.(e.latlng.lat, e.latlng.lng));
+
+    // Add User Location Marker if available
+    if (userLocation) {
+        const userMarker = L.divIcon({
+            className: 'user-location-marker',
+            html: `
+                <div class="relative flex items-center justify-center">
+                    <div class="absolute w-8 h-8 bg-blue-500/30 rounded-full animate-ping"></div>
+                    <div class="absolute w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg"></div>
+                </div>
+            `,
+            iconSize: [20, 20]
+        });
+        L.marker([userLocation.lat, userLocation.lon], { icon: userMarker }).addTo(map);
+    }
+
+    map.on('click', (e: any) => onLocationSelect?.(e.latlng.lat, e.latlng.lng, { fromMapClick: true }));
 
     return map;
   };
@@ -200,6 +279,10 @@ const HeatMap: React.FC<HeatMapProps> = ({
         .leaflet-tooltip-pane {
           z-index: 12000 !important;
         }
+        .user-location-marker {
+          background: transparent !important;
+          border: none !important;
+        }
       `;
       document.head.appendChild(style);
     }
@@ -211,13 +294,18 @@ const HeatMap: React.FC<HeatMapProps> = ({
     const instance = setupMap(mapRef.current, false);
     if (instance) mapInstance.current = instance;
 
+    // Trigger initial location request ONCE if not already attempted/found
+    if (!userLocation && !hasAttempted) {
+      handleLocateMe();
+    }
+
     return () => {
       if (mapInstance.current) {
         mapInstance.current.remove();
         mapInstance.current = null;
       }
     };
-  }, [centerLat, centerLon, intensity, isExpanded]);
+  }, [centerLat, centerLon, intensity, isExpanded, userLocation, hasAttempted]);
 
   useEffect(() => {
     if (!isExpanded || typeof window === 'undefined' || !modalMapRef.current) return;
@@ -231,7 +319,7 @@ const HeatMap: React.FC<HeatMapProps> = ({
         modalMapInstance.current = null;
       }
     };
-  }, [isExpanded, centerLat, centerLon, intensity]);
+  }, [isExpanded, centerLat, centerLon, intensity, userLocation]);
 
   return (
     <>
@@ -247,8 +335,21 @@ const HeatMap: React.FC<HeatMapProps> = ({
           <button
             onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}
             className="p-3 glass glass--rounded shadow-xl text-slate-900 hover:scale-110 active:scale-95 transition-all"
+            title="Expand Map"
           >
             <Maximize size={20} />
+          </button>
+        </div>
+
+        {/* Live Location Button */}
+        <div className="absolute bottom-6 right-6 z-10">
+          <button
+            onClick={handleLocateMe}
+            disabled={isLocating}
+            className={`p-3 glass glass--rounded shadow-xl text-brand-orange hover:scale-110 active:scale-95 transition-all flex items-center justify-center ${isLocating ? 'animate-pulse' : ''}`}
+            title="Locate Me"
+          >
+            {isLocating ? <Loader2 size={20} className="animate-spin" /> : <LocateFixed size={20} />}
           </button>
         </div>
       </div>
@@ -268,12 +369,25 @@ const HeatMap: React.FC<HeatMapProps> = ({
                 </div>
               </div>
               
-              <button
-                onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
-                className="w-10 h-10 flex items-center justify-center bg-slate-900 text-white rounded-full shadow-2xl pointer-events-auto active:scale-90 transition-all"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex gap-2 pointer-events-auto">
+                <button
+                  onClick={handleLocateMe}
+                  disabled={isLocating}
+                  className="h-10 px-4 bg-white/90 backdrop-blur-xl text-brand-orange rounded-full shadow-2xl border border-slate-100 active:scale-90 transition-all flex items-center gap-2 font-black text-[10px] uppercase tracking-tighter"
+                  title="Locate Me"
+                >
+                  {isLocating ? <Loader2 size={16} className="animate-spin" /> : <LocateFixed size={16} />}
+                  {isLocating ? 'Scanning...' : 'Live Locate'}
+                </button>
+
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
+                  className="w-10 h-10 flex items-center justify-center bg-slate-900 text-white rounded-full shadow-2xl active:scale-90 transition-all"
+                  title="Close Map"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             {/* Tight Legend */}
